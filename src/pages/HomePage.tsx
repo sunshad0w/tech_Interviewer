@@ -19,13 +19,15 @@
  * ```
  */
 
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@/contexts'
 import { useGuides } from '@/hooks'
-import { PositionCard } from '@/components'
+import { PositionCard, MigrationDialog } from '@/components'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, Database } from 'lucide-react'
+import { isSQLiteEnabled } from '@/database/adapter'
 
 /**
  * Компонент HomePage - главная страница приложения
@@ -35,7 +37,16 @@ import { Moon, Sun } from 'lucide-react'
 export default function HomePage() {
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
-  const { guides, loading, error } = useGuides()
+  const { guides, loading, error, refetch } = useGuides()
+  const [migrationDialogOpen, setMigrationDialogOpen] = useState(false)
+  const [isMigrated, setIsMigrated] = useState(isSQLiteEnabled())
+
+  // Обработчик завершения миграции
+  const handleMigrationComplete = () => {
+    setIsMigrated(true)
+    setMigrationDialogOpen(false)
+    refetch() // Перезагрузить guides после миграции
+  }
 
   // Error State
   if (error) {
@@ -93,20 +104,37 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="shrink-0"
-              aria-label="Переключить тему"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Migration Button (только если еще не мигрировано) */}
+              {!isMigrated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMigrationDialogOpen(true)}
+                  className="shrink-0"
+                  aria-label="Миграция в SQLite"
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  Мигрировать в SQLite
+                </Button>
               )}
-            </Button>
+
+              {/* Theme Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="shrink-0"
+                aria-label="Переключить тему"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -265,6 +293,13 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Migration Dialog */}
+      <MigrationDialog
+        open={migrationDialogOpen}
+        onOpenChange={setMigrationDialogOpen}
+        onComplete={handleMigrationComplete}
+      />
     </div>
   )
 }

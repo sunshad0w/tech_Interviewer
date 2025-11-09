@@ -10,14 +10,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import type { PositionStatistics, InterviewGuide } from '@/types'
 import {
-  getPositionStatistics,
-  savePositionStatistics,
-  initializeStatistics,
-  updateQuestionScore,
-  resetPositionStatistics,
-  resetChapterStatistics,
-  resetQuestionScore
-} from '@/services/localStorage'
+  getStatistics,
+  updateScore as updateScoreAdapter,
+  resetPosition as resetPositionAdapter,
+  resetChapter as resetChapterAdapter,
+} from '@/database/adapter'
+import { initializeStatistics } from '@/services/localStorage'
 
 /**
  * Тип контекста статистики
@@ -96,12 +94,11 @@ export function StatisticsProvider({ children }: StatisticsProviderProps): React
    */
   const setCurrentPosition = useCallback((position: string, guide: InterviewGuide): void => {
     setCurrentPositionState(position)
-    let stats = getPositionStatistics(position)
+    let stats = getStatistics(position)
 
-    // Инициализировать если не существует
+    // Инициализировать если не существует (только для старой системы localStorage)
     if (!stats) {
       stats = initializeStatistics(guide)
-      savePositionStatistics(stats)
     }
 
     setStatistics(stats)
@@ -111,15 +108,15 @@ export function StatisticsProvider({ children }: StatisticsProviderProps): React
    * Обновить оценку вопроса
    */
   const updateScore = useCallback((chapterNum: number, questionNum: number, score: number): void => {
-    if (!statistics) {
-      console.warn('Cannot update score: no statistics loaded')
+    if (!currentPosition) {
+      console.warn('Cannot update score: no position selected')
       return
     }
 
-    const updated = updateQuestionScore(statistics, chapterNum, questionNum, score)
-    savePositionStatistics(updated)
+    updateScoreAdapter(currentPosition, chapterNum, questionNum, score)
+    const updated = getStatistics(currentPosition)
     setStatistics(updated)
-  }, [statistics])
+  }, [currentPosition])
 
   /**
    * Сбросить всю статистику позиции
@@ -130,8 +127,8 @@ export function StatisticsProvider({ children }: StatisticsProviderProps): React
       return
     }
 
-    resetPositionStatistics(currentPosition, guide)
-    const stats = getPositionStatistics(currentPosition)
+    resetPositionAdapter(currentPosition)
+    const stats = getStatistics(currentPosition)
     setStatistics(stats)
   }, [currentPosition])
 
@@ -144,13 +141,14 @@ export function StatisticsProvider({ children }: StatisticsProviderProps): React
       return
     }
 
-    resetChapterStatistics(currentPosition, chapterNum, guide)
-    const stats = getPositionStatistics(currentPosition)
+    resetChapterAdapter(currentPosition, chapterNum)
+    const stats = getStatistics(currentPosition)
     setStatistics(stats)
   }, [currentPosition])
 
   /**
    * Сбросить оценку конкретного вопроса
+   * TODO: После миграции сброс устанавливает score=0 вместо null
    */
   const resetQuestion = useCallback((chapterNum: number, questionNum: number): void => {
     if (!currentPosition) {
@@ -158,13 +156,14 @@ export function StatisticsProvider({ children }: StatisticsProviderProps): React
       return
     }
 
-    resetQuestionScore(currentPosition, chapterNum, questionNum)
-    const stats = getPositionStatistics(currentPosition)
+    // Используем updateScore с 0 (адаптер не поддерживает null)
+    updateScoreAdapter(currentPosition, chapterNum, questionNum, 0)
+    const stats = getStatistics(currentPosition)
     setStatistics(stats)
   }, [currentPosition])
 
   /**
-   * Обновить статистику из localStorage
+   * Обновить статистику из storage (localStorage или SQLite)
    */
   const refreshStatistics = useCallback((): void => {
     if (!currentPosition) {
@@ -172,7 +171,7 @@ export function StatisticsProvider({ children }: StatisticsProviderProps): React
       return
     }
 
-    const stats = getPositionStatistics(currentPosition)
+    const stats = getStatistics(currentPosition)
     setStatistics(stats)
   }, [currentPosition])
 

@@ -20,8 +20,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { loadInterviewGuide, getAllGuides } from '@/services/jsonLoader'
-import { getPositionStatistics } from '@/services/localStorage'
+import { getGuides as getGuidesAdapter } from '@/database/adapter'
 import type { InterviewGuide, PositionStatistics } from '@/types'
 
 /**
@@ -77,50 +76,28 @@ export function useGuides(): UseGuidesReturn {
         setLoading(true)
         setError(null)
 
-        // Получаем список всех guides
-        const filenames = getAllGuides()
+        // Используем адаптер для получения guides (SQLite или JSON + localStorage)
+        const guidesData = await getGuidesAdapter()
 
-        if (filenames.length === 0) {
+        if (guidesData.length === 0) {
           setGuides([])
           setLoading(false)
           return
         }
 
-        // Загружаем все guides параллельно
-        const loadedGuidesPromises = filenames.map(async (filename) => {
-          try {
-            const guide = await loadInterviewGuide(filename)
-
-            // Загружаем статистику для этой позиции
-            const statistics = getPositionStatistics(guide.guide_name)
-
-            return {
-              guide,
-              statistics,
-              filename
-            }
-          } catch (err) {
-            console.error(`Failed to load guide: ${filename}`, err)
-            // Возвращаем null для failed guides
-            return null
-          }
-        })
-
-        // Ждем результатов всех загрузок
-        const loadedGuides = await Promise.all(loadedGuidesPromises)
-
-        // Фильтруем null (неудачные загрузки)
-        const validGuides = loadedGuides.filter(
-          (g): g is GuideWithStats => g !== null
-        )
-
-        if (validGuides.length === 0 && filenames.length > 0) {
-          throw new Error('Не удалось загрузить ни одного guide. Проверьте корректность JSON файлов.')
-        }
+        // Преобразуем в формат GuideWithStats
+        const validGuides = guidesData.map(({ guide, statistics }) => ({
+          guide,
+          statistics,
+          filename: guide.guide_name + '.json',
+        }))
 
         setGuides(validGuides)
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка при загрузке guides'
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'Неизвестная ошибка при загрузке guides'
         setError(errorMessage)
         console.error('Error loading guides:', err)
       } finally {

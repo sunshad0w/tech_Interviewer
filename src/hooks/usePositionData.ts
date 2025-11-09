@@ -1,19 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { InterviewGuide } from '../types/interview';
 import type { PositionStatistics } from '../types/statistics';
-import { loadInterviewGuide } from '../services/jsonLoader';
-import { getPositionStatistics, initializeStatistics } from '../services/localStorage';
-
-/**
- * Mapping from position names to JSON filenames
- */
-const FILENAME_MAP: Record<string, string> = {
-  'React Developer - Senior Level Interview Guide': 'react.json',
-  'Angular - Гайд для подготовки к интервью (Senior уровень)': 'angular.json',
-  'Гайд по Node.js для Senior Backend Разработчика': 'nodejs.json',
-  'Vue.js - Гайд для подготовки к интервью (Senior уровень)': 'vue.json',
-  'TypeScript - Гайд для подготовки к интервью (Senior уровень)': 'typescript.json',
-};
+import { getGuide, getStatistics } from '@/database/adapter';
+import { initializeStatistics } from '../services/localStorage';
 
 /**
  * Summary statistics calculated from position data
@@ -54,22 +43,23 @@ export function usePositionData(positionName: string): UsePositionDataResult {
     setError(null);
 
     try {
-      // Get filename from mapping
-      const filename = FILENAME_MAP[positionName];
+      // Decode position name (может быть закодирован в URL)
+      const decodedPositionName = decodeURIComponent(positionName);
 
-      if (!filename) {
-        throw new Error(`Позиция "${positionName}" не найдена`);
+      // Load guide using adapter (SQLite or JSON)
+      const loadedGuide = await getGuide(decodedPositionName);
+
+      if (!loadedGuide) {
+        throw new Error(`Позиция "${decodedPositionName}" не найдена`);
       }
 
-      // Load guide
-      const loadedGuide = await loadInterviewGuide(filename);
       setGuide(loadedGuide);
 
-      // Load or initialize statistics
-      let stats = getPositionStatistics(loadedGuide.guide_name);
+      // Load statistics using adapter
+      let stats = getStatistics(loadedGuide.guide_name);
 
       if (!stats) {
-        // Initialize statistics if not found
+        // Initialize statistics if not found (только для старой системы localStorage)
         stats = initializeStatistics(loadedGuide);
       }
 
