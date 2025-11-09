@@ -1,0 +1,1 @@
+../interview/GUIDE_JSON_SCHEMA.md

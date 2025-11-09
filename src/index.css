@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  /* Light mode colors - Indigo Theme */
+  --color-primary: #4f46e5; /* indigo-600 */
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #e0e7ff; /* indigo-100 */
+  --color-secondary-foreground: #312e81; /* indigo-900 */
+  --color-destructive: #dc2626; /* red-600 */
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #f1f5f9; /* slate-100 */
+  --color-muted-foreground: #64748b; /* slate-500 */
+  --color-accent: #c7d2fe; /* indigo-200 */
+  --color-accent-foreground: #3730a3; /* indigo-800 */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a; /* slate-900 */
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a; /* slate-900 */
+  --color-border: #e2e8f0; /* slate-200 */
+  --color-input: #e2e8f0; /* slate-200 */
+  --color-ring: #6366f1; /* indigo-500 */
+  --color-background: #ffffff;
+  --color-foreground: #0f172a; /* slate-900 */
+
+  /* Semantic colors for statistics */
+  --color-success: #16a34a; /* green-600 */
+  --color-success-foreground: #ffffff;
+  --color-warning: #ea580c; /* orange-600 */
+  --color-warning-foreground: #ffffff;
+  --color-info: #2563eb; /* blue-600 */
+  --color-info-foreground: #ffffff;
+}
+
+/* Dark mode colors - Indigo Theme */
+.dark {
+  --color-primary: #818cf8; /* indigo-400 */
+  --color-primary-foreground: #1e1b4b; /* indigo-950 */
+  --color-secondary: #312e81; /* indigo-900 */
+  --color-secondary-foreground: #e0e7ff; /* indigo-100 */
+  --color-muted: #1e293b; /* slate-800 */
+  --color-muted-foreground: #94a3b8; /* slate-400 */
+  --color-accent: #3730a3; /* indigo-800 */
+  --color-accent-foreground: #c7d2fe; /* indigo-200 */
+  --color-popover: #1e293b; /* slate-800 */
+  --color-popover-foreground: #f1f5f9; /* slate-100 */
+  --color-card: #1e293b; /* slate-800 */
+  --color-card-foreground: #f1f5f9; /* slate-100 */
+  --color-border: #334155; /* slate-700 */
+  --color-input: #334155; /* slate-700 */
+  --color-ring: #818cf8; /* indigo-400 */
+  --color-background: #0f172a; /* slate-900 */
+  --color-foreground: #f1f5f9; /* slate-100 */
+
+  /* Semantic colors for statistics */
+  --color-success: #22c55e; /* green-500 */
+  --color-success-foreground: #052e16; /* green-950 */
+  --color-warning: #f97316; /* orange-500 */
+  --color-warning-foreground: #431407; /* orange-950 */
+  --color-info: #3b82f6; /* blue-500 */
+  --color-info-foreground: #172554; /* blue-950 */
+}
+
+/* Base styles */
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
