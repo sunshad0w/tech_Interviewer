@@ -18,3 +18,14 @@ export {
 export type { MigrationProgress, MigrationResult } from './migration'
 
 export { DATABASE_SCHEMA, DATABASE_TRIGGERS, INTEGRITY_CHECKS } from './schema'
+
+export {
+  getAllGuides,
+  getGuideByName,
+  getPositionStatistics,
+  updateQuestionScore,
+  resetPositionStatistics,
+  resetChapterStatistics,
+  getWeightedRandomQuestion,
+  getLowScoreQuestions,
+} from './dbQueries'
