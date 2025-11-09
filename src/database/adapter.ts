@@ -14,7 +14,7 @@ import {
   resetPositionStatistics,
   resetChapterStatistics,
 } from './dbQueries'
-import { loadGuideFromJSON, getAllJSONGuides } from '@/services/jsonLoader'
+import { getAllGuides as getAllGuideFilenames, loadInterviewGuide } from '@/services/jsonLoader'
 import {
   getPositionStatistics as getStatsFromLocalStorage,
   updateQuestionScore as updateScoreInLocalStorage,
@@ -67,7 +67,22 @@ export async function getGuides(): Promise<
     })
   } else {
     // Использовать JSON + localStorage (старый метод)
-    return await getAllJSONGuides()
+    const filenames = getAllGuideFilenames()
+
+    const loadedGuides = await Promise.all(
+      filenames.map(async (filename) => {
+        try {
+          const guide = await loadInterviewGuide(filename)
+          const statistics = getStatsFromLocalStorage(guide.guide_name)
+          return { guide, statistics }
+        } catch (err) {
+          console.error(`Failed to load guide: ${filename}`, err)
+          return null
+        }
+      })
+    )
+
+    return loadedGuides.filter((item): item is { guide: InterviewGuide; statistics: PositionStatistics | null } => item !== null)
   }
 }
 
@@ -78,7 +93,19 @@ export async function getGuide(guideName: string): Promise<InterviewGuide | null
   if (isSQLiteEnabled()) {
     return getGuideByName(guideName)
   } else {
-    return await loadGuideFromJSON(guideName)
+    // Загружаем из JSON по имени guide
+    const filenames = getAllGuideFilenames()
+    for (const filename of filenames) {
+      try {
+        const guide = await loadInterviewGuide(filename)
+        if (guide.guide_name === guideName) {
+          return guide
+        }
+      } catch (err) {
+        console.error(`Failed to load guide: ${filename}`, err)
+      }
+    }
+    return null
   }
 }
 
